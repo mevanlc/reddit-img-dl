@@ -1,4 +1,4 @@
-module github.com/The-Eye-Team/reddit-dl
+module github.com/IceWreck/reddit-img-dl
 
 go 1.12
 

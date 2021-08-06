@@ -1,30 +1,32 @@
-# reddit-dl
-![loc](https://sloc.xyz/github/The-Eye-Team/reddit-dl)
-[![license](https://img.shields.io/github/license/The-Eye-Team/reddit-dl.svg)](https://github.com/The-Eye-Team/reddit-dl/blob/master/LICENSE)
-[![discord](https://img.shields.io/discord/302796547656253441.svg)](https://discord.gg/the-eye)
-[![circleci](https://circleci.com/gh/The-Eye-Team/reddit-dl.svg?style=svg)](https://circleci.com/gh/The-Eye-Team/reddit-dl)
-[![release](https://img.shields.io/github/v/release/The-Eye-Team/reddit-dl)](https://github.com/The-Eye-Team/reddit-dl/releases/latest)
-[![goreportcard](https://goreportcard.com/badge/github.com/The-Eye-Team/reddit-dl)](https://goreportcard.com/report/github.com/The-Eye-Team/reddit-dl)
-[![codefactor](https://www.codefactor.io/repository/github/The-Eye-Team/reddit-dl/badge)](https://www.codefactor.io/repository/github/The-Eye-Team/reddit-dl)
+# reddit-img-dl
 
-Downloader for submissions to reddit.com. Supports both subreddits and users. Currently does not grab comments.
+Downloader for media submissions to reddit.com. Supports both subreddits and users.
 
-## Download
-https://github.com/The-Eye-Team/reddit-dl/releases/latest
+Fork of [reddit-dl](https://github.com/The-Eye-Team/reddit-dl).
+
+## Why Fork the upstream project ?
+
+`reddit-dl` downloads images/videos in a database like structure, with thousands of deep nested subfolders and non-sensical filenames. Its meant for archival, with metadata stored in a sqlite database. This structure is a pain in the ass if you want to browse via a file manager or gallery app/webapp and it's almost impossible to find something without consulting the metadata db.
+
+Changes:
+
+- Downloads all files in a single folder, instead of nested folders chosen according to afew digits of the image's id.
+- All images have the post title in the filename so it's easy to search them from a file manager.
+
+If you want to archive subreddits, then I'd recommend the [upstream project.](https://github.com/The-Eye-Team/reddit-dl)
 
 ## Usage
+
 ```sh
-    --do-comments       Enable this flag to save post comments.
     --concurrency int   Maximum number of simultaneous downloads. (default 10)
--d, --domain string     The host of a domain to archive.
     --mbpp-bar-gradient Enabling this will make the bar gradient from red/yellow/green.
-    --no-domain-dir     Enable this flag to disable adding 'reddit.com' to --save-dir.
-    --no-pics           Enable this flag to disable the saving of post attachments.
     --save-dir string   Path to a directory to save to.
 -r, --subreddit string  The name of a subreddit to archive. (ex. AskReddit, unixporn, CasualConversation, etc.)
 -u, --user string       The name of a user to archive. (ex. spez, PoppinKREAM, Shitty_Watercolour, etc.)
 ```
+
 The flags `-r` and `-u` may be passed multiple times to download many reddits at once.
 
 ## License
+
 MIT

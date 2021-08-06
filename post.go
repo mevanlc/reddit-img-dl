@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/nektro/go-util/util"
 	dbstorage "github.com/nektro/go.dbstorage"
 	"github.com/valyala/fastjson"
 )
@@ -45,13 +44,9 @@ func postListingCb(t, name string, item *fastjson.Value) (bool, bool) {
 	postedAt := int64(item.GetFloat64("data", "created_utc"))
 	insertPost(sub, id, title, pjson, urlS, author, postedAt)
 
-	dir := DoneDir + "/r/" + sub
-	dir2 := dir + "/" + id[:2] + "/" + id
-	if util.DoesDirectoryExist(dir2) {
-		return false, true
-	}
+	dir := DoneDir + "/" + sub
 
-	go downloadPost(t, name, id, urlS, dir2)
+	go downloadPost(t, name, id, urlS, dir, title)
 
 	return false, false
 }

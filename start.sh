@@ -3,4 +3,4 @@
 set -e
 go test
 go build
-./reddit-dl \
+./reddit-img-dl \

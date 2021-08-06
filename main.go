@@ -25,10 +25,10 @@ var (
 	DoneDir = "./data/"
 	dbP     dbstorage.Database
 	dbC     dbstorage.Database
-	doComms bool
-	noPics  bool
-	noDmDir bool
-	wg      = new(sync.WaitGroup)
+	doComms bool = false
+	noPics  bool = false
+	noDmDir bool = true
+	wg           = new(sync.WaitGroup)
 )
 var (
 	netClient = &http.Client{
@@ -40,12 +40,8 @@ func main() {
 	flagSubr := pflag.StringArrayP("subreddit", "r", []string{}, "The name of a subreddit to archive. (ex. AskReddit, unixporn, CasualConversation, etc.)")
 	flagUser := pflag.StringArrayP("user", "u", []string{}, "The name of a user to archive. (ex. spez, PoppinKREAM, Shitty_Watercolour, etc.)")
 	flagDomn := pflag.StringArrayP("domain", "d", []string{}, "The host of a domain to archive.")
-
 	flagSaveDir := pflag.String("save-dir", "", "Path to a directory to save to.")
 	flagConcurr := pflag.Int("concurrency", 10, "Maximum number of simultaneous downloads.")
-	pflag.BoolVar(&doComms, "do-comments", false, "Enable this flag to save post comments.")
-	pflag.BoolVar(&noPics, "no-pics", false, "Enable this flag to disable the saving of post attachments.")
-	pflag.BoolVar(&noDmDir, "no-domain-dir", false, "Enable this flag to disable adding 'reddit.com' to --save-dir.")
 
 	pflag.Parse()
 
@@ -161,7 +157,9 @@ func findExtension(urlS string) string {
 	return ext[0]
 }
 
-func downloadPost(t, name string, id string, urlS string, dir string) {
+func downloadPost(t, name string, id string, urlS string, dir string, title string) {
+	title = strings.Replace(title, " ", "_", -1)
+
 	if noPics {
 		return
 	}
@@ -216,7 +214,7 @@ func downloadPost(t, name string, id string, urlS string, dir string) {
 		os.MkdirAll(dir, os.ModePerm)
 
 		for _, item := range links {
-			go mbpp.CreateDownloadJob(item[0], dir+"/"+item[1], nil)
+			go mbpp.CreateDownloadJob(item[0], dir+"/"+title+item[1], nil)
 		}
 	}
 }
