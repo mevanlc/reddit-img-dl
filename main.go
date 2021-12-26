@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
+	"math/rand"
 	"mime"
 	"net/http"
 	"net/url"
@@ -119,7 +120,7 @@ func fetchListing(loc, after string, f func(string, string, *fastjson.Value) (bo
 			after = "&after=" + after
 		}
 		res, _ := fetch(http.MethodGet, "https://old.reddit.com/"+loc+"/.json?show=all"+after)
-		bys, _ := ioutil.ReadAll(res.Body)
+		bys, _ := io.ReadAll(res.Body)
 		val, _ := fastjson.Parse(string(bys))
 
 		next = string(val.GetStringBytes("data", "after"))
@@ -196,15 +197,21 @@ func downloadPost(t, name string, id string, urlS string, dir string, title stri
 		pid := strings.Split(urlS, "/")[2]
 		links = append(links, [2]string{urlS, urlO.Host + "_" + pid + ".gif"})
 	}
-	if urlO.Host == "gfycat.com" && strings.Contains(ct, "text/html") {
+	if (urlO.Host == "gfycat.com" || urlO.Host == "www.redgifs.com") && strings.Contains(ct, "text/html") {
 		res, _ := fetch(http.MethodGet, urlS)
-		doc, _ := goquery.NewDocumentFromResponse(res)
-		doc.Find(`script[type="application/ld+json"]`).Each(func(_ int, el *goquery.Selection) {
-			vurl := fastjson.GetString([]byte(el.Text()), "video", "contentUrl")
-			s := strings.Split(vurl, "/")
-			f := s[len(s)-1]
-			go mbpp.CreateDownloadJob(vurl, dir+"/"+f, nil)
-		})
+		// doc, _ := goquery.NewDocumentFromResponse(res)
+		// doc.Find(`script[type="application/ld+json"]`).Each(func(_ int, el *goquery.Selection) {
+		// 	vurl := fastjson.GetString([]byte(el.Text()), "video", "contentUrl")
+		// 	s := strings.Split(vurl, "/")
+		// 	f := s[len(s)-1]
+		// 	go mbpp.CreateDownloadJob(vurl, dir+"/"+f, nil)
+		// })
+		webBody, err := io.ReadAll(res.Body)
+		if err == nil {
+			finalLink := getStringInBetween(string(webBody), `property="og:video" content="`, `">`)
+			links = append(links, [2]string{finalLink, randomStringGen(5) + "_" + urlO.Host + ".mp4"})
+		}
+
 	}
 	if !strings.Contains(ct, "text/html") {
 		fn := strings.TrimPrefix(urlO.Path, filepath.Dir(urlO.Path))
@@ -214,7 +221,41 @@ func downloadPost(t, name string, id string, urlS string, dir string, title stri
 		os.MkdirAll(dir, os.ModePerm)
 
 		for _, item := range links {
-			go mbpp.CreateDownloadJob(item[0], dir+"/"+title+item[1], nil)
+			go mbpp.CreateDownloadJob(item[0], dir+"/"+sanitizeFileName(title)+"_"+item[1], nil)
 		}
 	}
+}
+
+// Utilities
+func sanitizeFileName(input string) string {
+	replacer := strings.NewReplacer(
+		",", "", ".", "", "-", "", ":", "", "!", "", "?", "", "[", "", "]", "", "(", "", ")", "", "/", "",
+	)
+	input = strings.TrimSpace(input)
+	input = strings.ReplaceAll(input, " ", "_")
+	input = replacer.Replace(input)
+	return input
+}
+
+func getStringInBetween(str string, start string, end string) (result string) {
+	s := strings.Index(str, start)
+	if s == -1 {
+		return
+	}
+	s += len(start)
+	e := strings.Index(str[s:], end)
+	if e == -1 {
+		return
+	}
+	return str[s : s+e]
+}
+
+func randomStringGen(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+	s := make([]rune, n)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(s)
 }
