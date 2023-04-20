@@ -10,6 +10,7 @@ Fork of [reddit-dl](https://github.com/The-Eye-Team/reddit-dl).
 
 Changes:
 
+- Fixed and added support for some image/gif hosts.
 - Downloads all files in a single folder, instead of nested folders chosen according to afew digits of the image's id.
 - All images have the post title in the filename so it's easy to search them from a file manager.
 
