@@ -43,6 +43,7 @@ func main() {
 	flagDomn := pflag.StringArrayP("domain", "d", []string{}, "The host of a domain to archive.")
 	flagSaveDir := pflag.String("save-dir", "", "Path to a directory to save to.")
 	flagConcurr := pflag.Int("concurrency", 10, "Maximum number of simultaneous downloads.")
+	pflag.BoolVar(&doComms, "do-comments", false, "Enable this flag to save post comments.")
 
 	pflag.Parse()
 
@@ -199,13 +200,6 @@ func downloadPost(t, name string, id string, urlS string, dir string, title stri
 	}
 	if (urlO.Host == "gfycat.com" || urlO.Host == "www.redgifs.com") && strings.Contains(ct, "text/html") {
 		res, _ := fetch(http.MethodGet, urlS)
-		// doc, _ := goquery.NewDocumentFromResponse(res)
-		// doc.Find(`script[type="application/ld+json"]`).Each(func(_ int, el *goquery.Selection) {
-		// 	vurl := fastjson.GetString([]byte(el.Text()), "video", "contentUrl")
-		// 	s := strings.Split(vurl, "/")
-		// 	f := s[len(s)-1]
-		// 	go mbpp.CreateDownloadJob(vurl, dir+"/"+f, nil)
-		// })
 		webBody, err := io.ReadAll(res.Body)
 		if err == nil {
 			finalLink := getStringInBetween(string(webBody), `property="og:video" content="`, `">`)
