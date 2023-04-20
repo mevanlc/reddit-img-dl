@@ -1,0 +1,16 @@
+project_name: reddit-img-dl
+
+build:
+  env:
+    - CGO_ENABLED=1
+
+  main: ./
+  binary: reddit-img-dl
+  goos:
+    - linux
+  goarch:
+    - amd64
+
+archives:
+  - name_template: "{{.Os}}-{{.Arch}}-{{ .ProjectName }}"
+    format: tar.gz
