@@ -21,6 +21,7 @@ Changes:
 - Fixed and added support for some image/gif hosts.
 - Downloads all files in a single folder, instead of nested folders chosen according to afew digits of the image's id.
 - All images have the post title in the filename so it's easy to search them from a file manager.
+- Ability to download top posts instead of recent posts.
 
 If you want to archive subreddits, then I'd recommend the [upstream project.](https://github.com/The-Eye-Team/reddit-dl)
 
@@ -35,11 +36,14 @@ Run in your terminal:
 Options:
 
 ```sh
-    --concurrency int   Maximum number of simultaneous downloads. (default 10)
-    --mbpp-bar-gradient Enabling this will make the bar gradient from red/yellow/green.
-    --save-dir string   Path to a directory to save to.
--r, --subreddit string  The name of a subreddit to archive. (ex. AskReddit, unixporn, CasualConversation, etc.)
--u, --user string       The name of a user to archive. (ex. spez, PoppinKREAM, Shitty_Watercolour, etc.)
+    --concurrency int         Maximum number of simultaneous downloads. (default 10)
+    --do-comments             Enable this flag to save post comments.
+-d, --domain stringArray      The host of a domain to archive.
+    --mbpp-bar-gradient       Enabling this will make the bar gradient from red/yellow/green.
+    --save-dir string         Path to a directory to save to.
+    --sort-top                Enable this flag to download top posts instead of recent ones.
+-r, --subreddit stringArray   The name of a subreddit to archive. (ex. AskReddit, unixporn, CasualConversation, etc.)
+-u, --user stringArray        The name of a user to archive. (ex. spez, PoppinKREAM, Shitty_Watercolour, etc.)
 ```
 
 The flags `-r` and `-u` may be passed multiple times to download many reddits at once.

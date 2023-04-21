@@ -23,13 +23,14 @@ import (
 )
 
 var (
-	DoneDir = "./data/"
-	dbP     dbstorage.Database
-	dbC     dbstorage.Database
-	doComms bool = false
-	noPics  bool = false
-	noDmDir bool = true
-	wg           = new(sync.WaitGroup)
+	DoneDir   = "./data/"
+	dbP       dbstorage.Database
+	dbC       dbstorage.Database
+	doComms   bool = false
+	noPics    bool = false
+	noDmDir   bool = true
+	sortByTop bool = false
+	wg             = new(sync.WaitGroup)
 )
 var (
 	netClient = &http.Client{
@@ -44,10 +45,16 @@ func main() {
 	flagSaveDir := pflag.String("save-dir", "", "Path to a directory to save to.")
 	flagConcurr := pflag.Int("concurrency", 10, "Maximum number of simultaneous downloads.")
 	pflag.BoolVar(&doComms, "do-comments", false, "Enable this flag to save post comments.")
-
+	pflag.BoolVar(&sortByTop, "sort-top", false, "Enable this flag to download top posts instead of recent ones.")
 	pflag.Parse()
 
-	//
+	if sortByTop && doComms {
+		// The way the original programmer structured this program makes it hard to fetch comments if sorting by top.
+		// (they fetch /r/<sub>/comments/ and not comments per post)
+		// And rewriting it would take too much effort.
+		doComms = false
+		util.Log("Fetching comments is disabled when sorting posts by top.")
+	}
 
 	if len(*flagSaveDir) > 0 {
 		DoneDir = *flagSaveDir
@@ -120,7 +127,15 @@ func fetchListing(loc, after string, f func(string, string, *fastjson.Value) (bo
 		if len(after) > 0 {
 			after = "&after=" + after
 		}
-		res, _ := fetch(http.MethodGet, "https://old.reddit.com/"+loc+"/.json?show=all"+after)
+
+		var fetchURL string
+		if sortByTop {
+			fetchURL = "https://old.reddit.com/" + loc + "/top" + "/.json?show=all&t=all" + after
+		} else {
+			fetchURL = "https://old.reddit.com/" + loc + "/.json?show=all" + after
+		}
+
+		res, _ := fetch(http.MethodGet, fetchURL)
 		bys, _ := io.ReadAll(res.Body)
 		val, _ := fastjson.Parse(string(bys))
 
