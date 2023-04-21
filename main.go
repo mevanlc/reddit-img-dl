@@ -3,17 +3,13 @@ package main
 import (
 	"fmt"
 	"io"
-	"math/rand"
-	"mime"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/nektro/go-util/ansi/style"
 	"github.com/nektro/go-util/mbpp"
 	"github.com/nektro/go-util/util"
@@ -159,112 +155,4 @@ func fetchListing(loc, after string, f func(string, string, *fastjson.Value) (bo
 		fetchListing(loc, next, f)
 	}
 	wg.Done()
-}
-
-func fetch(method, urlS string) (*http.Response, error) {
-	req, _ := http.NewRequest(method, urlS, nil)
-	req.Header.Add("user-agent", "linux:eu.the-eye.reddit-dl:v1.0.0 (by /u/nektro)")
-	res, _ := http.DefaultClient.Do(req)
-	return res, nil
-}
-
-func findExtension(urlS string) string {
-	res, _ := fetch(http.MethodHead, urlS)
-	ext, _ := mime.ExtensionsByType(res.Header.Get("content-type"))
-	return ext[0]
-}
-
-func downloadPost(t, name string, id string, urlS string, dir string, title string) {
-	title = strings.Replace(title, " ", "_", -1)
-
-	if noPics {
-		return
-	}
-
-	urlO, err := url.Parse(urlS)
-	if err != nil {
-		return
-	}
-
-	res, err := netClient.Head(urlS)
-	if err != nil {
-		return
-	}
-
-	links := [][2]string{}
-	ct := res.Header.Get("content-type")
-
-	if urlO.Host == "old.reddit.com" {
-		return
-	}
-	if urlO.Host == "i.redd.it" || urlO.Host == "i.imgur.com" || (urlO.Host == "imgur.com" && !strings.Contains(ct, "text/html")) {
-		links = append(links, [2]string{urlS, urlO.Host + "_" + urlO.Path[1:]})
-	}
-	if urlO.Host == "imgur.com" && strings.Contains(ct, "text/html") {
-		res, _ := fetch(http.MethodGet, urlS)
-		doc, _ := goquery.NewDocumentFromResponse(res)
-		doc.Find(".post-images .post-image-container").Each(func(_ int, el *goquery.Selection) {
-			pid, _ := el.Attr("id")
-			ext := findExtension("https://i.imgur.com/" + pid + ".png")
-			links = append(links, [2]string{"https://i.imgur.com/" + pid + ext, urlO.Host + "_" + pid + ext})
-		})
-	}
-	if urlO.Host == "media.giphy.com" && ct == "image/gif" {
-		pid := strings.Split(urlS, "/")[2]
-		links = append(links, [2]string{urlS, urlO.Host + "_" + pid + ".gif"})
-	}
-	if (urlO.Host == "gfycat.com" || urlO.Host == "www.redgifs.com") && strings.Contains(ct, "text/html") {
-		res, _ := fetch(http.MethodGet, urlS)
-		webBody, err := io.ReadAll(res.Body)
-		if err == nil {
-			finalLink := getStringInBetween(string(webBody), `property="og:video" content="`, `">`)
-			links = append(links, [2]string{finalLink, randomStringGen(5) + "_" + urlO.Host + ".mp4"})
-		}
-
-	}
-	if !strings.Contains(ct, "text/html") {
-		fn := strings.TrimPrefix(urlO.Path, filepath.Dir(urlO.Path))
-		links = append(links, [2]string{urlS, urlO.Host + "_" + fn})
-	}
-	if len(links) > 0 {
-		os.MkdirAll(dir, os.ModePerm)
-
-		for _, item := range links {
-			go mbpp.CreateDownloadJob(item[0], dir+"/"+sanitizeFileName(title)+"_"+item[1], nil)
-		}
-	}
-}
-
-// Utilities
-func sanitizeFileName(input string) string {
-	replacer := strings.NewReplacer(
-		",", "", ".", "", "-", "", ":", "", "!", "", "?", "", "[", "", "]", "", "(", "", ")", "", "/", "",
-	)
-	input = strings.TrimSpace(input)
-	input = strings.ReplaceAll(input, " ", "_")
-	input = replacer.Replace(input)
-	return input
-}
-
-func getStringInBetween(str string, start string, end string) (result string) {
-	s := strings.Index(str, start)
-	if s == -1 {
-		return
-	}
-	s += len(start)
-	e := strings.Index(str[s:], end)
-	if e == -1 {
-		return
-	}
-	return str[s : s+e]
-}
-
-func randomStringGen(n int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-	s := make([]rune, n)
-	for i := range s {
-		s[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(s)
 }
