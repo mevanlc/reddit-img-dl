@@ -15,7 +15,7 @@ import (
 
 func fetch(method, urlS string) (*http.Response, error) {
 	req, _ := http.NewRequest(method, urlS, nil)
-	req.Header.Add("user-agent", "linux:reddit-img-dl")
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36")
 	res, _ := http.DefaultClient.Do(req)
 	return res, nil
 }

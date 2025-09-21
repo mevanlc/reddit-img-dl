@@ -19,14 +19,14 @@ import (
 )
 
 var (
-	DoneDir   = "./data/"
-	dbP       dbstorage.Database
-	dbC       dbstorage.Database
-	doComms   bool = false
-	noPics    bool = false
-	noDmDir   bool = true
-	sortByTop bool = false
-	wg             = new(sync.WaitGroup)
+	DoneDir      = "./data/"
+	dbP          dbstorage.Database
+	dbC          dbstorage.Database
+	doComms      bool = false
+	noPics       bool = false
+	noDmDir      bool = true
+	sortTopRange string
+	wg           = new(sync.WaitGroup)
 )
 var (
 	netClient = &http.Client{
@@ -38,13 +38,36 @@ func main() {
 	flagSubr := pflag.StringArrayP("subreddit", "r", []string{}, "The name of a subreddit to archive. (ex. AskReddit, unixporn, CasualConversation, etc.)")
 	flagUser := pflag.StringArrayP("user", "u", []string{}, "The name of a user to archive. (ex. spez, PoppinKREAM, Shitty_Watercolour, etc.)")
 	flagDomn := pflag.StringArrayP("domain", "d", []string{}, "The host of a domain to archive.")
-	flagSaveDir := pflag.String("save-dir", "", "Path to a directory to save to.")
-	flagConcurr := pflag.Int("concurrency", 10, "Maximum number of simultaneous downloads.")
-	pflag.BoolVar(&doComms, "do-comments", false, "Enable this flag to save post comments.")
-	pflag.BoolVar(&sortByTop, "sort-top", false, "Enable this flag to download top posts instead of recent ones.")
+	flagSaveDir := pflag.StringP("save-dir", "s", "", "Path to a directory to save to.")
+	flagConcurr := pflag.IntP("concurrency", "c", 10, "Maximum number of simultaneous downloads.")
+	pflag.BoolVarP(&doComms, "do-comments", "C", false, "Enable this flag to save post comments.")
+	pflag.StringVarP(&sortTopRange, "sort-top", "t", "", "Download top posts by timeframe. One of: hour, day, week, year, all.")
+
+	if len(os.Args) <= 1 {
+		pflag.CommandLine.SetOutput(os.Stdout)
+		pflag.Usage()
+		pflag.CommandLine.SetOutput(os.Stderr)
+		return
+	}
 	pflag.Parse()
 
-	if sortByTop && doComms {
+	if len(sortTopRange) > 0 {
+		sortTopRange = strings.ToLower(sortTopRange)
+		validSortTop := map[string]struct{}{
+			"hour": {},
+			"day":  {},
+			"week": {},
+			"year": {},
+			"all":  {},
+		}
+		if _, ok := validSortTop[sortTopRange]; !ok {
+			util.Log(fmt.Sprintf("Invalid value for --sort-top: %s", sortTopRange))
+			util.Log("Valid options: hour, day, week, year, all.")
+			os.Exit(1)
+		}
+	}
+
+	if len(sortTopRange) > 0 && doComms {
 		// The way the original programmer structured this program makes it hard to fetch comments if sorting by top.
 		// (they fetch /r/<sub>/comments/ and not comments per post)
 		// And rewriting it would take too much effort.
@@ -125,8 +148,8 @@ func fetchListing(loc, after string, f func(string, string, *fastjson.Value) (bo
 		}
 
 		var fetchURL string
-		if sortByTop {
-			fetchURL = "https://old.reddit.com/" + loc + "/top" + "/.json?show=all&t=all" + after
+		if len(sortTopRange) > 0 {
+			fetchURL = "https://old.reddit.com/" + loc + "/top/.json?show=all&t=" + sortTopRange + after
 		} else {
 			fetchURL = "https://old.reddit.com/" + loc + "/.json?show=all" + after
 		}
