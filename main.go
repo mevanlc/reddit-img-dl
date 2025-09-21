@@ -41,7 +41,7 @@ func main() {
 	flagSaveDir := pflag.StringP("save-dir", "s", "", "Path to a directory to save to.")
 	flagConcurr := pflag.IntP("concurrency", "c", 10, "Maximum number of simultaneous downloads.")
 	pflag.BoolVarP(&doComms, "do-comments", "C", false, "Enable this flag to save post comments.")
-	pflag.StringVarP(&sortTopRange, "sort-top", "t", "", "Download top posts by timeframe. One of: hour, day, week, year, all.")
+	pflag.StringVarP(&sortTopRange, "sort-top", "t", "", "Download top posts by timeframe. One of: hour, day, week, month, year, all.")
 
 	if len(os.Args) <= 1 {
 		pflag.CommandLine.SetOutput(os.Stdout)
@@ -54,15 +54,16 @@ func main() {
 	if len(sortTopRange) > 0 {
 		sortTopRange = strings.ToLower(sortTopRange)
 		validSortTop := map[string]struct{}{
-			"hour": {},
-			"day":  {},
-			"week": {},
-			"year": {},
-			"all":  {},
+			"hour":  {},
+			"day":   {},
+			"week":  {},
+			"month": {},
+			"year":  {},
+			"all":   {},
 		}
 		if _, ok := validSortTop[sortTopRange]; !ok {
 			util.Log(fmt.Sprintf("Invalid value for --sort-top: %s", sortTopRange))
-			util.Log("Valid options: hour, day, week, year, all.")
+			util.Log("Valid options: hour, day, week, month, year, all.")
 			os.Exit(1)
 		}
 	}
